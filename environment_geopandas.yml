@@ -1,4 +1,4 @@
-# Conda environment for the geopandas / vector-raster stack (Tucson pipeline).
+# Conda environment for the geopandas.
 # Platform: linux-64. Recreate with:
 #   conda env create -f environment_geopandas.yml
 name: geopandas
