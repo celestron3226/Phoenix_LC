@@ -12,14 +12,9 @@ LiDAR-derived canopy height model (CHM), and NDVI, using a U-Net segmentation ar
 | 4    | Soil     |
 | 5    | Building |
 | 6    | Asphalt  |
-| 7    | Water    | <img width="1600" height="1076" alt="Phoenix_LC" src="https://github.com/user-attachments/assets/af13893b-5128-4382-b5db-cb60cd4feac6" />
+| 7    | Water    | 
 
-
-The main method predicts all seven classes end-to-end (Plan A). Two alternative
-methods are kept under `phoenix/experiments/` for comparison: a hybrid method
-where the network detects vegetation and a CHM height rule splits it into
-Tree / Shrub / Grass, and a weakly supervised method trained on rule-based
-pseudo-labels (Plan B).
+<img width="700" alt="Phoenix land cover map" src="https://github.com/user-attachments/assets/af13893b-5128-4382-b5db-cb60cd4feac6" />
 
 ## Environment setup
 
