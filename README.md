@@ -1,9 +1,8 @@
 # Phoenix_LC
 
 Deep learning pipeline for land-cover classification in the City of Phoenix.
-The model maps seven classes at 0.3 m resolution from NAIP imagery, a
-LiDAR-derived canopy height model (CHM), and NDVI, using a U-Net whose encoder
-is pretrained on the ChesapeakeCVPR land-cover dataset.
+The model classifies seven categories at 0.3 m resolution from NAIP imagery, a
+LiDAR-derived canopy height model (CHM), and NDVI, using a U-Net segmentation architecture with several pre-trained backbones.
 
 | code | class    |
 |------|----------|
@@ -13,7 +12,8 @@ is pretrained on the ChesapeakeCVPR land-cover dataset.
 | 4    | Soil     |
 | 5    | Building |
 | 6    | Asphalt  |
-| 7    | Water    |
+| 7    | Water    | <img width="1600" height="1076" alt="Phoenix_LC" src="https://github.com/user-attachments/assets/af13893b-5128-4382-b5db-cb60cd4feac6" />
+
 
 The main method predicts all seven classes end-to-end (Plan A). Two alternative
 methods are kept under `phoenix/experiments/` for comparison: a hybrid method
