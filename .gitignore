@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# Data rasters / vectors (too large for the repo; regenerate with the pipeline)
+*.tif
+*.tiff
+*.jp2
+*.laz
+*.las
+*.vrt
+*.npz
+*.shp
+*.shx
+*.dbf
+*.prj
+*.cpg
+*.qpj
+*.gpkg
+*.qml
+
+# Model checkpoints
+*.pth
+*.pt
+
+# Pipeline output directories
+patches/
+seeds/
+label_bundles/
+per_naip/
+dtm_tiles/
+dsm_tiles/
+raw_data/
+Result/
+Tile/
+Predict/
+
+# SLURM logs
+*.out
+*.err
+
+# OS / editor
+.DS_Store
+Thumbs.db
