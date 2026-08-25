@@ -4,16 +4,6 @@ Deep learning pipeline for land-cover classification in the City of Phoenix.
 The model classifies seven categories at 0.3 m resolution from NAIP imagery, a
 LiDAR-derived canopy height model (CHM), and NDVI, using a U-Net segmentation architecture with several pre-trained backbones.
 
-| code | class    |
-|------|----------|
-| 1    | Tree     |
-| 2    | Shrub    |
-| 3    | Grass    |
-| 4    | Soil     |
-| 5    | Building |
-| 6    | Asphalt  |
-| 7    | Water    | 
-
 <img width="700" alt="Phoenix land cover map" src="https://github.com/user-attachments/assets/af13893b-5128-4382-b5db-cb60cd4feac6" />
 
 ## Environment setup
