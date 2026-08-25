@@ -53,11 +53,10 @@ Phoenix_LC/
 │   │   ├── 02_make_veg_seeds
 │   │   └── 03_build_bundles
 │   ├── training/                   Core train / predict pipeline (Plan A)
-│   │   ├── phoenix_common.py
-│   │   ├── prepare_tiles_phoenix.py
-│   │   ├── train_phoenix.py
-│   │   └── predict_phoenix.py
-│   └── experiments/                Ablations and alternative methods (preserved)
+│       ├── phoenix_common.py
+│       ├── prepare_tiles_phoenix.py
+│       ├── train_phoenix.py
+│       └── predict_phoenix.py
 └── LICENSE
 ```
 
@@ -105,20 +104,6 @@ script, or pass the corresponding command-line argument where one exists (the
 training scripts accept `--tile-root`, `--train-root`, `--encoder-ckpt`, and so
 on). The `.sh` submission scripts also use `YOUR_SLURM_ACCOUNT` and
 `YOUR_EMAIL@example.com`; replace these before submitting.
-
-## Citation
-
-If you use this code, please cite the accompanying workshop paper. Update the
-entry below once the paper is published.
-
-```bibtex
-@inproceedings{kim2026phoenixlc,
-  title     = {TODO: paper title},
-  author    = {Kim, Insoo and others},
-  booktitle = {TODO: venue},
-  year      = {2026}
-}
-```
 
 ## License
 
