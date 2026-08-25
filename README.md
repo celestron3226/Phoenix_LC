@@ -24,7 +24,7 @@ its checkpoint from Hugging Face.
 ```
 Phoenix_LC/
 ├── environment_pytorch_gpu.yml     Model training and prediction env
-├── environment_geopandas.yml       Data prep / labeling env (GDAL, PDAL)
+├── environment_geopandas.yml       Data preparing / labeling env (GDAL, PDAL)
 ├── environment_segment.yml         GPU vegetation-seed env (DeepForest, SAM3)
 ├── chesapeake/                     Encoder pretraining on ChesapeakeCVPR
 │   └── train_chesapeake_swin.py
@@ -33,11 +33,11 @@ Phoenix_LC/
 │   │   ├── naip/  jp2_combine
 │   │   ├── ndvi/  ndvi_per_tile
 │   │   └── chm/   download_laz, LAZ_to_CHM
-│   ├── label/                      Three-pass label generation for ArcGIS editing
+│   ├── label/                      Label generation for ArcGIS editing
 │   │   ├── 01_make_patches
 │   │   ├── 02_make_veg_seeds
 │   │   └── 03_build_bundles
-│   ├── training/                   Core train / predict pipeline (Plan A)
+│   ├── training/                   Train and predict pipeline
 │       ├── phoenix_common.py
 │       ├── prepare_tiles_phoenix.py
 │       ├── train_phoenix.py
@@ -65,21 +65,18 @@ The full workflow runs in five stages.
 4. Train and predict (`phoenix/training/`). Convert the hand-modified labels
    into tiles, fine-tune the U-Net from the Chesapeake encoder, and run
    city-wide prediction clipped to the Phoenix boundary.
-5. Experiments (`phoenix/experiments/`). Encoder-initialization and
-   coordinate/patch-size ablations, plus the hybrid and Plan-B alternatives.
 
 ## Data
 
 The raw inputs are not distributed with this repository (they are large and
 publicly available at the source):
 
-- NAIP 0.3 m 4-band (RGBN) imagery for the Phoenix quads.
-- USGS 3DEP LiDAR (LAZ) for the same area.
+- NAIP 0.3 m 4-band (RGBN) imagery for the City of Phoenix (https://earthexplorer.usgs.gov/).
+- USGS 3DEP LiDAR (LAZ) for the same area (https://apps.nationalmap.gov/lidar
+explorer/#/).
 - The Phoenix Council District boundary shapefile.
 - Microsoft Building Footprints, road centerlines, and wetland polygons (used
   only to seed built-surface and water labels during labeling).
-
-All rasters are handled in EPSG:3857.
 
 ## Configuring paths
 
@@ -89,6 +86,11 @@ script, or pass the corresponding command-line argument where one exists (the
 training scripts accept `--tile-root`, `--train-root`, `--encoder-ckpt`, and so
 on). The `.sh` submission scripts also use `YOUR_SLURM_ACCOUNT` and
 `YOUR_EMAIL@example.com`; replace these before submitting.
+
+## Acknowledgments
+
+Supported by NSF grant DEB-2224662 (CAP LTER). Computing resources provided by
+Research Computing at Arizona State University.
 
 ## License
 
