@@ -72,8 +72,7 @@ The raw inputs are not distributed with this repository (they are large and
 publicly available at the source):
 
 - NAIP 0.3 m 4-band (RGBN) imagery for the City of Phoenix (https://earthexplorer.usgs.gov/).
-- USGS 3DEP LiDAR (LAZ) for the same area (https://apps.nationalmap.gov/lidar
-explorer/#/).
+- USGS 3DEP LiDAR (LAZ) for the same area (https://apps.nationalmap.gov/lidar-explorer/#/).
 - The Phoenix Council District boundary shapefile.
 - Microsoft Building Footprints, road centerlines, and wetland polygons (used
   only to seed built-surface and water labels during labeling).
