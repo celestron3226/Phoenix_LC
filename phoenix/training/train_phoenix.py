@@ -1,24 +1,17 @@
-# train_phoenix.py   (Week 13, Sol)
-# =============================================================================
-# Experiment 3 -- PATCH-SIZE comparison on top of the Week 12 encoder arms
 # (Phoenix 7-class). Sol / SLURM version.
-#
-# The coordinate-channel axis of the local Week 13 grid has been REMOVED.
-# Only the "coord none" conditions are run here, i.e. two conditions per
 # (arch, init, seed):
 #   coord-none_128 : 128 px tiles, no coordinate channels
 #   coord-none_256 : 256 px tiles, no coordinate channels
 #
-# Everything lives in the folder that holds this file (any name works,
-# e.g. /path/to/Phoenix_LC/train/08.24(script,result)):
+# Everything lives in the folder that holds this file (any folder name works):
 #       <here>/   this file + phoenix_common.py + the sbatch script
 #       <here>/result/   one folder per run + logs + results.csv (see below)
 #
-# Tiles: the sets written by prepare_tiles_training.py v3 on Sol
-#   /path/to/Phoenix/scripts/Tile/256/tiles_<stamp>_n<NNNN>/
-#   /path/to/Phoenix/scripts/Tile/128/tiles_<stamp>_n<NNNN>/
-#   Pinned to the tiles_2026-08-04_211537_* sets (the ones the local Week 13
-#   runs used); change with --tile-set <substring>, or pass '' for the newest.
+# Tiles: the sets written by prepare_tiles_phoenix.py v3 on Sol
+#   /path/to/Tile/256/tiles_<stamp>_n<NNNN>/
+#   /path/to/Tile/128/tiles_<stamp>_n<NNNN>/
+#   Pinned to one prepare run via TILE_SET (the set the local Week 13 runs
+#   used); change with --tile-set <substring>, or pass '' for the newest.
 #   A flat layout with train/ val/ config.json directly under
 #   <TILE_BASE>/<size> also works.
 #
@@ -31,8 +24,8 @@
 #       aerial_swinb_si.pth            swin_b   satlas_aerial
 #       sentinel2_swinb_si_rgb.pth     swin_b   satlas_s2
 #   If a file is not in that folder, the Chesapeake training tree
-#   (/path/to/chesapeake_cvpr/Dataset_training) is searched by name,
-#   so our own encoders do not need to be copied.
+#   (CHESAPEAKE_TRAIN_ROOT) is searched by name, so our own encoders do not
+#   need to be copied.
 #
 # Results (same layout as the local Week 13 Train folder, so the two can be
 # merged later):
@@ -62,7 +55,7 @@
 # CosineAnnealingLR, CE(class_weight, ignore 255) + 0.7*Dice, albumentations
 # aug (geom on full stack, radiometric on NAIP only).
 #
-# ONE SLURM JOB PER RUN: train_phoenix.sh is a job array
+# ONE SLURM JOB PER RUN: encoder_experiment_week13_sol.sh is a job array
 # (--array=0-77); task k runs job k of the list printed by --list-jobs via
 # --task-id/--n-tasks. Every run gets its own SLURM log, result folder and
 # summary.json. (`--make-sbatch` alternatively writes one sbatch file per run
@@ -70,17 +63,17 @@
 #
 # IMPORTANT (Sol): compute nodes may not reach the internet. Pre-download the
 # ImageNet weights ONCE on a login node before submitting:
-#   python train_phoenix.py --predownload
+#   python encoder_experiment_week13_sol.py --predownload
 #
-# Usage (from the folder holding this file, env pytorch_gpu):
-#   python train_phoenix.py --check                # inputs present?
-#   python train_phoenix.py --list-jobs            # show the 78 runs
-#   mkdir -p slurm_out && sbatch --array=0-77%8 --time=03:00:00 train_phoenix.sh
+# Usage (from the folder holding this file, inside your GPU conda env):
+#   python encoder_experiment_week13_sol.py --check                # inputs present?
+#   python encoder_experiment_week13_sol.py --list-jobs            # show the 78 runs
+#   mkdir -p slurm_out && sbatch --array=0-77%8 --time=03:00:00 encoder_experiment_week13_sol.sh
 #   # smoke test in an interactive GPU session (2 epochs):
-#   python train_phoenix.py --archs swin_b --inits chesapeake \
+#   python encoder_experiment_week13_sol.py --archs swin_b --inits chesapeake \
 #       --seeds 1 --patches 128 --epochs 2
 #   # rebuild results.csv / results_summary.csv from the finished runs
-#   python train_phoenix.py --aggregate
+#   python encoder_experiment_week13_sol.py --aggregate
 #
 # NOTE: phoenix_common.py must sit in the SAME folder as this file.
 # =============================================================================
@@ -112,27 +105,32 @@ except ImportError as e:
         "[FATAL] torchvision is required for the swin_b arms "
         "(pip install torchvision matching your torch version): " + str(e))
 
+# phoenix_common.py lives in ../training in the public repo; keep the same-folder
+# import working too
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "training"))
 from phoenix_common import normalize_stack
 
 # =============================================================================
-# PATHS (Sol). All of these can be overridden on the command line.
+# PATHS (Sol). EDIT THESE PATHS. All of these can be overridden on the
+# command line.
 # =============================================================================
 # Base = the folder this file lives in (whatever it is called), so nothing
 # below depends on the folder name. Override with --train-root if needed.
 BASE_ROOT   = Path(__file__).resolve().parent
 SCRIPT_DIR  = BASE_ROOT                       # this file, phoenix_common.py, sbatch/
 TRAIN_ROOT  = BASE_ROOT / "result"            # run folders + results.csv + logs/
-# Tile sets written by prepare_tiles_training.py v3 on Sol:
+# Tile sets written by prepare_tiles_phoenix.py v3 on Sol:
 #   <TILE_BASE>/256/tiles_<stamp>_n<NNNN>/{tiles/train, tiles/val, config.json}
 #   <TILE_BASE>/128/tiles_<stamp>_n<NNNN>/...
 # The tiles_* folder matching TILE_SET (below) is used, or the newest one.
-TILE_BASE   = Path("/path/to/Phoenix/scripts/Tile")
-CKPT_ROOT   = Path("/path/to/weights")   # all checkpoint files, by name
-CHESAPEAKE_TRAIN_ROOT = Path("/path/to/chesapeake_cvpr/Dataset_training")
+TILE_BASE   = Path("/path/to/Tile")                  # EDIT: <TILE_BASE>/128, /256
+CKPT_ROOT   = Path("/path/to/weights")               # EDIT: all checkpoint files, by name
+CHESAPEAKE_TRAIN_ROOT = Path("/path/to/chesapeake_cvpr/Dataset_training")   # EDIT (optional)
 
 # Checkpoint FILE NAMES per architecture. 'random'/'imagenet' need no file.
-# First name = the file as uploaded to /path/to/weights; the other
-# names are the original local / Chesapeake-training file names (fallbacks).
+# First name = the file as stored in CKPT_ROOT; the other names are the
+# original local / Chesapeake-training file names (fallbacks).
 CKPT_NAME_BY_ARCH = {
     "resnet50": {
         # OUR resnet50 land-cover encoder ('encoder.'-prefixed keys)
@@ -167,9 +165,9 @@ ALL_ARCHS = ["swin_b", "resnet50", "resnet18"]
 # The experiment grid axis.
 ALL_PATCHES = [128, 256]
 
-# SLURM settings used by --make-sbatch (Sol).
+# SLURM settings used by --make-sbatch (Sol). EDIT env / account / mail.
 SLURM = {
-    "env":       "pytorch_gpu",
+    "env":       "CHANGE_ME_GPU_ENV",
     "account":   "YOUR_SLURM_ACCOUNT",
     "partition": "public",
     "qos":       "public",
@@ -756,7 +754,7 @@ def train_one(arch, init, patch, cfg, train_tiles, val_tiles, epochs, seed, work
 
     ckpt = resolve_ckpt(arch, init)
     summary = {
-        "experiment": "phoenix_patch_benchmark", "init": init, "arch": arch,
+        "experiment": "coord-none_patch_week13_sol", "init": init, "arch": arch,
         "patch": patch, "bs": BS, "lr": LR, "seed": seed,
         "epochs": epochs, "in_channels": in_channels,
         "n_train": len(train_tiles), "n_val": len(val_tiles),
@@ -825,7 +823,10 @@ def summary_to_row(s, class_names):
 
 
 def atomic_write_csv(path, fieldnames, rows):
-    tmp = path.with_suffix(path.suffix + ".tmp")
+    # per-process temp name: several SLURM tasks can finish at the same moment
+    # and rebuild the csv concurrently; a shared tmp name made them clobber
+    # each other and fail on os.replace
+    tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp")
     with tmp.open("w", newline="", encoding="utf-8") as f:
         wr = csv.DictWriter(f, fieldnames=fieldnames)
         wr.writeheader()
@@ -910,9 +911,8 @@ def find_split_dir(tile_root, split):
     return None
 
 
-# Substring of the tiles_<stamp>_n<NNNN> folder to use. Pinned to the set the
-# local Week 13 runs used (tiles_2026-08-04_211537_n0940 for 128; the 256 set
-# of the same prepare run shares the stamp). None = newest folder.
+# Substring of the tiles_<stamp>_n<NNNN> folder to use (the prepare run the
+# local Week 13 experiments used). None = newest folder. EDIT to your stamp.
 TILE_SET = "2026-08-04_211537"
 
 
