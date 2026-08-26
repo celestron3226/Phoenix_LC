@@ -1,5 +1,5 @@
 """
-prepare_tiles_phoenix.py  (v3 -- hand-modified labels, multi patch size)
+prepare_tiles_training.py  (v3 -- hand-modified labels, multi patch size)
 ------------------------------------------------------------------------
 Convert the HAND-MODIFIED Phoenix label groups into training .npz tiles for
 train_phoenix.py.
@@ -10,8 +10,8 @@ Changes vs v2:
         128 : each 256 tile cut into a 2x2 grid of non-overlapping 128 crops
               (4x the tile count)
     Output roots (one timestamped folder per size, so runs can coexist):
-        <TILE_OUT_BASE>/256/tiles_<stamp>_n<NNNN>/
-        <TILE_OUT_BASE>/128/tiles_<stamp>_n<NNNN>/
+        /path/to/Phoenix/scripts/Tile/256/tiles_<stamp>_n<NNNN>/
+        /path/to/Phoenix/scripts/Tile/128/tiles_<stamp>_n<NNNN>/
     -> pass the wanted folder to train_phoenix.py via --tile-root
   * The train/val split is decided ONCE per source tile and inherited by all
     of its 128 crops, so crops of the same tile never leak across splits.
@@ -20,11 +20,12 @@ Changes vs v2:
 
 Changes vs v1 (kept from v2):
   * Labels come from LABEL_ROOT (ArcGIS-edited shapefiles):
-        <LABEL_ROOT>/label_0001-0050/label_0001-0050.shp  (+ .dbf .prj .shx ...)
+        /path/to/Phoenix/labeling_hand/Label_modified/
+            label_0001-0050/label_0001-0050.shp  (+ .dbf .prj .shx ...)
     Only groups that exist under LABEL_ROOT are processed. New label_XXXX-YYYY
     folders added later are picked up automatically on the next run.
   * NAIP / NDVI / CHM rasters still come from the ORIGINAL bundles:
-        <BUNDLE_ROOT>/group_XXXX-YYYY/
+        /path/to/Phoenix/labeling_new/label_bundles/group_XXXX-YYYY/
   * Tree-over-Building rule: where a Tree polygon overlaps a Building polygon
     (canopy hanging over a roof), the pixel is labeled Tree, regardless of
     polygon draw order. All other overlaps keep the original behavior
@@ -36,7 +37,7 @@ surface during annotation, so there is NO shadow class):
 Internally stored as 0..6; unlabeled pixels = 255 (IGNORE_INDEX).
 
 Run (CPU only):
-  python prepare_tiles_phoenix.py
+  python prepare_tiles_training.py
 """
 
 import glob
@@ -56,7 +57,7 @@ from shapely.geometry import box
 from shapely.strtree import STRtree
 
 # =============================================================================
-# CONFIG   ---  >>> EDIT THESE PATHS FOR YOUR ENVIRONMENT (see README) <<<
+# CONFIG
 # =============================================================================
 BUNDLE_ROOT = "/path/to/Phoenix/labeling_new/label_bundles"        # naip/ndvi/chm ONLY
 LABEL_ROOT = "/path/to/Phoenix/labeling_hand/Label_modified"       # hand-edited labels
@@ -469,9 +470,9 @@ def main():
         for i, n in enumerate(CLASS_NAMES):
             print(f"        {i + 1} {n:<9s} {class_px[ps][i] / max(total_px, 1):8.4f}")
         print(f"[DONE] tiles -> {out_roots[ps]}")
-    print(f"\n[NEXT] train with e.g.:")
-    print(f"  python train_phoenix.py --bs 16 --lr 1e-4 --seed 1 --coord xy \\")
-    print(f"      --tile-root {out_roots[PATCH_SIZES[0]]}")
+    print(f"\n[NEXT] train with the benchmark script, e.g.:")
+    print(f"  python encoder_experiment_week13_sol.py --check")
+    print(f"  (its --tile-base should point at {TILE_OUT_BASE})")
 
 
 if __name__ == "__main__":

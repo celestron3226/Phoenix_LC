@@ -1,44 +1,84 @@
 # phoenix/training
 
-The core end-to-end pipeline (Plan A): turn the hand-modified labels into tiles,
-fine-tune the U-Net from the Chesapeake encoder, and predict city-wide.
+The pipeline that produced the paper's Phoenix land-cover map, in run order:
+training tiles, model training (the paper's benchmark), prediction tiles,
+per-quad prediction, and the final map products.
 
-`phoenix_common.py` holds the normalization and coordinate-encoding code shared
-by training and prediction, so both use byte-identical preprocessing.
+There are two tile scripts with different roles; do not mix them up:
 
-## Run
+| script | role | labels? |
+|--------|------|---------|
+| `prepare_tiles_training.py` | cut the hand-labeled bundles into train/val `.npz` tiles for model training | yes |
+| `prepare_tiles_prediction.py` | cut the FULL metro NAIP + NDVI + CHM into 256 px `.npz` tiles for city-wide prediction | no |
+
+`phoenix_common.py` holds the shared normalization code, so training and
+prediction preprocessing stay byte identical.
+
+## 1. Training tiles (CPU, `geopandas` env)
 
 ```bash
-# 1. Build .npz tiles from the hand-modified label groups (CPU).
-python prepare_tiles_phoenix.py
-#    -> prints the timestamped tile folder to pass as --tile-root below.
-
-# 2. Fine-tune the U-Net (ResNet18 encoder from the Chesapeake checkpoint).
-python train_phoenix.py --bs 16 --lr 1e-4 --seed 1 --coord xy \
-    --tile-root  /path/to/Phoenix/Result/tiles_<stamp>_n<count> \
-    --encoder-ckpt /path/to/chesapeake_pretrain/best_encoder_e032_miou0.7219.pth
-
-# 3. City-wide prediction over all NAIP quads (SLURM array, or serial).
-python predict_phoenix.py --run-dir <RUN_DIR>
-
-# 4. Mosaic the per-quad outputs.
-cd <OUT_DIR>
-gdalbuildvrt landcover_phoenix.vrt landcover_*.tif
-gdalbuildvrt veg_phoenix.vrt veg_*.tif
+sbatch prepare_tiles_training.sh     # runs prepare_tiles_training.py
 ```
 
-## Coordinate encoding
+Converts the hand-modified label groups (from `phoenix/label/`) into 128 and
+256 px training tiles in one run, with a per-source-tile train/val split and
+the Tree-over-Building overlap rule.
 
-`--coord xy` (default) adds two CoordConv channels of per-pixel normalized
-coordinates. `--coord none` disables them (ablation) and `--coord sincos` uses
-multi-scale Fourier features. Prediction reads the mode from the run's
-`run_config.json`, so it can never mismatch training.
+## 2. Train: the benchmark (GPU, `pytorch_gpu` env)
+
+`encoder_experiment_week13_sol.py` runs the paper's grid on SLURM: encoder
+(ResNet18 / ResNet50 / Swin-v2-Base) x pre-trained weights (random / ImageNet /
+RSC / Chesapeake LC / SatlasPretrain) x patch size (128 / 256), three seeds,
+one SLURM array task per run.
+
+```bash
+python encoder_experiment_week13_sol.py --check          # inputs present?
+python encoder_experiment_week13_sol.py --predownload    # ImageNet weights (login node)
+python encoder_experiment_week13_sol.py --list-jobs      # index -> run mapping
+mkdir -p slurm_out
+sbatch --array=0-77%8 encoder_experiment_week13_sol.sh
+python encoder_experiment_week13_sol.py --aggregate      # rebuild results.csv
+```
+
+The best run (SatlasPretrain aerial + Swin-v2-Base, patch 256, coord none)
+provides the `model_best.pth` used below.
+
+## 3. Prediction tiles (CPU array, `geopandas` env)
+
+```bash
+sbatch prepare_tiles_prediction.sh   # runs prepare_tiles_prediction.py, one quad per task
+```
+
+Cuts every NAIP + NDVI + CHM quad into non-overlapping 256 px prediction tiles,
+copying the normalization constants from the training tile config so
+prediction preprocessing matches training exactly.
+
+## 4. Predict (GPU array, `pytorch_gpu` env)
+
+```bash
+sbatch predict_lc.sh                 # runs predict_phoenix_lc.py, one quad per task
+```
+
+Loads `model_best.pth` into the Swin-v2-B U-Net and writes one
+`landcover_<stem>.tif` per quad (uint8 codes 1..7, 0 = nodata).
+
+## 5. Final maps (CPU, `geopandas` env)
+
+```bash
+sbatch make_maps.sh
+```
+
+Mosaics all per-quad rasters, clips the mosaic to the City of Phoenix boundary
+(after repairing the boundary geometry with ogr2ogr -makevalid), and
+polygonizes both products to GeoPackage:
+`phoenix_lc_full.tif` / `phoenix_lc_city.tif` and
+`phoenix_lc_full.gpkg` / `phoenix_lc.gpkg`.
 
 ## Notes
 
-- Run these in the `pytorch_gpu` conda environment
-  (`environment_pytorch_gpu.yml`).
-- Paths appear as `/path/to/...` placeholders (edit the `CONFIG` block or pass
-  the matching CLI argument).
-- `predict_phoenix.py` picks the highest-mIoU `best_unet_*.pth` in the run dir
-  automatically; override with `--model`.
+- Every stage is resume-safe: finished quads/runs are detected and skipped, so
+  any script can simply be resubmitted after a timeout.
+- Paths appear as `/path/to/...` placeholders; edit the `CONFIG` blocks (or the
+  CLI flags of the benchmark script) before running.
+- The `.sh` scripts use `YOUR_SLURM_ACCOUNT` and `YOUR_EMAIL@example.com`;
+  replace before submitting.

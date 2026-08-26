@@ -101,7 +101,7 @@ def normalize_stack(img_hwc, cfg):
 # =============================================================================
 # CLASS-SCHEME HELPERS  (shared by Plan A / hybrid / Plan B)
 # =============================================================================
-# prepare_tiles_phoenix.py stores internal 7-class ids (code - 1):
+# prepare_tiles_training.py stores internal 7-class ids (code - 1):
 #   0 Tree  1 Shrub  2 Grass  3 Soil  4 Building  5 Asphalt  6 Water
 # Output CODES (what predictions/GeoTIFFs use) are internal + 1, i.e. 1..7.
 VEG7_INTERNAL = (0, 1, 2)          # Tree, Shrub, Grass
