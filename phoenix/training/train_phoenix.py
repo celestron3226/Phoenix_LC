@@ -1,4 +1,4 @@
-# encoder_experiment_week13_sol.py   (Week 13, Sol)
+# train_phoenix.py   (Week 13, Sol)
 # =============================================================================
 # Experiment 3 -- PATCH-SIZE comparison on top of the Week 12 encoder arms
 # (Phoenix 7-class). Sol / SLURM version.
@@ -62,7 +62,7 @@
 # CosineAnnealingLR, CE(class_weight, ignore 255) + 0.7*Dice, albumentations
 # aug (geom on full stack, radiometric on NAIP only).
 #
-# ONE SLURM JOB PER RUN: encoder_experiment_week13_sol.sh is a job array
+# ONE SLURM JOB PER RUN: train_phoenix.sh is a job array
 # (--array=0-77); task k runs job k of the list printed by --list-jobs via
 # --task-id/--n-tasks. Every run gets its own SLURM log, result folder and
 # summary.json. (`--make-sbatch` alternatively writes one sbatch file per run
@@ -70,17 +70,17 @@
 #
 # IMPORTANT (Sol): compute nodes may not reach the internet. Pre-download the
 # ImageNet weights ONCE on a login node before submitting:
-#   python encoder_experiment_week13_sol.py --predownload
+#   python train_phoenix.py --predownload
 #
 # Usage (from the folder holding this file, env pytorch_gpu):
-#   python encoder_experiment_week13_sol.py --check                # inputs present?
-#   python encoder_experiment_week13_sol.py --list-jobs            # show the 78 runs
-#   mkdir -p slurm_out && sbatch --array=0-77%8 --time=03:00:00 encoder_experiment_week13_sol.sh
+#   python train_phoenix.py --check                # inputs present?
+#   python train_phoenix.py --list-jobs            # show the 78 runs
+#   mkdir -p slurm_out && sbatch --array=0-77%8 --time=03:00:00 train_phoenix.sh
 #   # smoke test in an interactive GPU session (2 epochs):
-#   python encoder_experiment_week13_sol.py --archs swin_b --inits chesapeake \
+#   python train_phoenix.py --archs swin_b --inits chesapeake \
 #       --seeds 1 --patches 128 --epochs 2
 #   # rebuild results.csv / results_summary.csv from the finished runs
-#   python encoder_experiment_week13_sol.py --aggregate
+#   python train_phoenix.py --aggregate
 #
 # NOTE: phoenix_common.py must sit in the SAME folder as this file.
 # =============================================================================
@@ -756,7 +756,7 @@ def train_one(arch, init, patch, cfg, train_tiles, val_tiles, epochs, seed, work
 
     ckpt = resolve_ckpt(arch, init)
     summary = {
-        "experiment": "coord-none_patch_week13_sol", "init": init, "arch": arch,
+        "experiment": "phoenix_patch_benchmark", "init": init, "arch": arch,
         "patch": patch, "bs": BS, "lr": LR, "seed": seed,
         "epochs": epochs, "in_channels": in_channels,
         "n_train": len(train_tiles), "n_val": len(val_tiles),

@@ -7,7 +7,7 @@ prepare_tiles_prediction.py. One output raster per NAIP quad.
 Model: satlas_aerial + Swin-V2-B U-Net (Week 13 FINAL), coord-none,
 6-channel input (NAIP RGBN + NDVI + CHM), trained on 256px patches.
 The model classes below are copied verbatim from predict_local_swin.py /
-encoder_experiment_week13.py so state dict keys match. Do not edit them.
+train_phoenix.py so state dict keys match. Do not edit them.
 
 Inputs:
     /path/to/Phoenix_LC/tile/config.json       normalization keys

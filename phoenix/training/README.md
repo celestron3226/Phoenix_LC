@@ -26,18 +26,18 @@ the Tree-over-Building overlap rule.
 
 ## 2. Train: the benchmark (GPU, `pytorch_gpu` env)
 
-`encoder_experiment_week13_sol.py` runs the paper's grid on SLURM: encoder
+`train_phoenix.py` runs the paper's grid on SLURM: encoder
 (ResNet18 / ResNet50 / Swin-v2-Base) x pre-trained weights (random / ImageNet /
 RSC / Chesapeake LC / SatlasPretrain) x patch size (128 / 256), three seeds,
 one SLURM array task per run.
 
 ```bash
-python encoder_experiment_week13_sol.py --check          # inputs present?
-python encoder_experiment_week13_sol.py --predownload    # ImageNet weights (login node)
-python encoder_experiment_week13_sol.py --list-jobs      # index -> run mapping
+python train_phoenix.py --check          # inputs present?
+python train_phoenix.py --predownload    # ImageNet weights (login node)
+python train_phoenix.py --list-jobs      # index -> run mapping
 mkdir -p slurm_out
-sbatch --array=0-77%8 encoder_experiment_week13_sol.sh
-python encoder_experiment_week13_sol.py --aggregate      # rebuild results.csv
+sbatch --array=0-77%8 train_phoenix.sh
+python train_phoenix.py --aggregate      # rebuild results.csv
 ```
 
 The best run (SatlasPretrain aerial + Swin-v2-Base, patch 256, coord none)

@@ -471,7 +471,7 @@ def main():
             print(f"        {i + 1} {n:<9s} {class_px[ps][i] / max(total_px, 1):8.4f}")
         print(f"[DONE] tiles -> {out_roots[ps]}")
     print(f"\n[NEXT] train with the benchmark script, e.g.:")
-    print(f"  python encoder_experiment_week13_sol.py --check")
+    print(f"  python train_phoenix.py --check")
     print(f"  (its --tile-base should point at {TILE_OUT_BASE})")
 
 
